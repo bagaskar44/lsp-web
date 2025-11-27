@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Detail Pesanan - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h4>Detail Pesanan #{{ info['kode_pinjam'] }}</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Peminjam:</strong> {{ info['nama_peminjam'] }}</p>
+                <p><strong>Tanggal Pesan:</strong> {{ info['tgl_pesan'] }}</p>
+                <hr>
+                
+                <h5>Daftar Buku yang Dipesan:</h5>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Judul Buku</th>
+                            <th>Pengarang</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in buku %}
+                        <tr>
+                            <td>{{ b['judul_buku'] }}</td>
+                            <td>{{ b['nama_pengarang'] }}</td>
+                            <td>
+                                <!-- Fitur Mengurangi Buku -->
+                                <a href="/hapus_item/{{ info['kode_pinjam'] }}/{{ b['id_detail'] }}" class="btn btn-warning btn-sm" onclick="return confirm('Hapus buku ini dari pesanan?');">
+                                    Stok Habis / Hapus
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center text-danger">Semua buku telah dihapus dari pesanan ini. Harap tolak pesanan.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="mt-4">
+                    <p class="text-muted small">*Pastikan stok buku tersedia sebelum menyetujui. Hapus buku jika tidak tersedia.</p>
+                    {% if buku %}
+                    <a href="/aksi_pesanan/{{ info['kode_pinjam'] }}/setuju" class="btn btn-success btn-lg me-2">SETUJUI PESANAN</a>
+                    {% endif %}
+                    <a href="/aksi_pesanan/{{ info['kode_pinjam'] }}/tolak" class="btn btn-danger btn-lg me-2">TOLAK PESANAN</a>
+                    <a href="/dashboard" class="btn btn-secondary btn-lg">Kembali</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
