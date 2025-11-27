@@ -8,6 +8,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'secret_key_216' 
+
+app.config['SESSION_COOKIE_NAME'] = 'session_peminjam'
 app.permanent_session_lifetime = timedelta(minutes=3)
 
 # Konfigurasi Database
@@ -23,7 +25,7 @@ mysql = MySQL(app)
 def index():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    return render_template('index.jinja')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -47,7 +49,7 @@ def login():
         else:
             flash('Username tidak ditemukan!', 'danger')
 
-    return render_template('login.html')
+    return render_template('login.jinja')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -72,7 +74,7 @@ def register():
         finally:
             cur.close()
 
-    return render_template('register.html')
+    return render_template('register.jinja')
 
 @app.route('/logout')
 def logout():
@@ -90,16 +92,16 @@ def dashboard():
     buku_list = cur.fetchall()
     cur.close()
     
-    return render_template('dashboard.html', buku=buku_list)
+    return render_template('dashboard.jinja', buku=buku_list)
 
 @app.route('/tambah_keranjang/<int:id_buku>')
 def tambah_keranjang(id_buku):
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
-    # Masukkan ID buku ke session list
+
     keranjang = session.get('keranjang', [])
     
+    # Masukkan ID buku ke session list    
     # Cek agar tidak meminjam buku yang sama 2 kali dalam 1 sesi
     if id_buku not in keranjang:
         keranjang.append(id_buku)
@@ -126,7 +128,7 @@ def keranjang():
         buku_di_keranjang = cur.fetchall()
         cur.close()
         
-    return render_template('keranjang.html', buku=buku_di_keranjang)
+    return render_template('keranjang.jinja', buku=buku_di_keranjang)
 
 @app.route('/hapus_keranjang/<int:id_buku>')
 def hapus_keranjang(id_buku):
@@ -148,7 +150,7 @@ def proses_pinjam():
     
     user_id = session['user_id']
     tgl_pesan = datetime.now()
-    # Contoh: Wajib kembalikan 7 hari setelah pemesanan
+    # Wajib kembalikan 7 hari setelah pemesanan
     tgl_wajibkembali = tgl_pesan + timedelta(days=7)
     
     cur = mysql.connection.cursor()
@@ -159,7 +161,7 @@ def proses_pinjam():
             VALUES (%s, %s, %s, 'DIPROSES')
         """, (user_id, tgl_pesan, tgl_wajibkembali))
         
-        # Ambil kode_pinjam yang baru saja dibuat
+        # Ambil kode_pinjam yang baru saja dibuat (Mabil primary key terakhir insert)
         kode_pinjam = cur.lastrowid
         
         # Masukkan detail buku ke tabel detail_peminjaman
@@ -192,7 +194,7 @@ def riwayat():
     cur = mysql.connection.cursor()
     
     # Query join untuk mengambil data peminjaman beserta detail bukunya
-    # Menggunakan GROUP_CONCAT agar buku tampil dalam satu baris per kode pinjam
+    # Pakai GROUP_CONCAT agar buku tampil dalam satu baris per kode pinjam
     query = """
         SELECT p.kode_pinjam, p.tgl_pesan, p.tgl_wajibkembali, p.status, 
                GROUP_CONCAT(b.judul_buku SEPARATOR ', ') as daftar_buku
@@ -207,7 +209,7 @@ def riwayat():
     data_riwayat = cur.fetchall()
     cur.close()
     
-    return render_template('riwayat.html', riwayat=data_riwayat)
+    return render_template('riwayat.jinja', riwayat=data_riwayat)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001) # Port 5001 agar tidak bentrok jika admin jalan juga
+    app.run(debug=True, port=5001) # Port 5001 biar ga bentrok kalau admin jalan juga
