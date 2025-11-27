@@ -8,6 +8,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'secret_key_admin_216' 
+
+app.config['SESSION_COOKIE_NAME'] = 'session_admin'
 app.permanent_session_lifetime = timedelta(minutes=3)
 
 # Konfigurasi Database
@@ -46,7 +48,7 @@ def login_admin():
         else:
             flash('Username admin tidak ditemukan!', 'danger')
 
-    return render_template('login.html')
+    return render_template('login.jinja')
 
 @app.route('/logout')
 def logout():
@@ -57,7 +59,6 @@ def logout():
 '''
 @app.route('/setup_admin')
 def setup_admin():
-    # Jalankan url ini sekali untuk membuat akun admin: user=admin, pass=admin123
     pass_hash = generate_password_hash('admin123')
     cur = mysql.connection.cursor()
     try:
@@ -91,8 +92,9 @@ def dashboard_admin():
     pesanan_masuk = cur.fetchall()
     cur.close()
     
-    return render_template('dashboard.html', pesanan=pesanan_masuk)
+    return render_template('dashboard.jinja', pesanan=pesanan_masuk)
 
+# Detail Pesanan
 @app.route('/detail_pesanan/<int:kode_pinjam>')
 def detail_pesanan(kode_pinjam):
     if 'admin_id' not in session:
@@ -119,11 +121,11 @@ def detail_pesanan(kode_pinjam):
     detail_buku = cur.fetchall()
     cur.close()
     
-    return render_template('detail_pesanan.html', info=info_pinjam, buku=detail_buku)
+    return render_template('detail_pesanan.jinja', info=info_pinjam, buku=detail_buku)
 
+# Hapus Buku
 @app.route('/hapus_item/<int:kode_pinjam>/<int:id_detail>')
 def hapus_item(kode_pinjam, id_detail):
-    # Fitur: Admin mengurangi buku dari daftar jika tidak tersedia
     if 'admin_id' not in session:
         return redirect(url_for('login_admin'))
     
@@ -190,7 +192,7 @@ def pengembalian():
     list_kembali = cur.fetchall()
     cur.close()
     
-    return render_template('pengembalian.html', list_kembali=list_kembali)
+    return render_template('pengembalian.jinja', list_kembali=list_kembali)
 
 @app.route('/konfirmasi_kembali/<int:kode_pinjam>')
 def konfirmasi_kembali(kode_pinjam):
@@ -234,7 +236,26 @@ def kelola_buku():
     buku_list = cur.fetchall()
     cur.close()
     
-    return render_template('kelola_buku.html', buku=buku_list)
+    return render_template('kelola_buku.jinja', buku=buku_list)
+
+@app.route('/hapus_buku_master/<int:id_buku>')
+def hapus_buku_master(id_buku):
+    if 'admin_id' not in session:
+        return redirect(url_for('login_admin'))
+    
+    cur = mysql.connection.cursor()
+    try:
+        # Mencoba menghapus buku
+        cur.execute("DELETE FROM buku WHERE id_buku = %s", (id_buku,))
+        mysql.connection.commit()
+        flash('Data buku berhasil dihapus dari database.', 'warning')
+    except Exception as e:
+        flash('Gagal menghapus buku. Buku sedang dipinjam atau ada riwayat transaksi.', 'danger')
+        print(e)
+    finally:
+        cur.close()
+    
+    return redirect(url_for('kelola_buku'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5002) # Port 5002 untuk Admin
+    app.run(debug=True, port=5002) # Port 5002 Admin
