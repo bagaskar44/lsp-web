@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kelola Buku - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">Arcadia ADMIN</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/dashboard">Pesanan Masuk</a>
+                <a class="nav-link" href="/pengembalian">Pengembalian</a>
+                <a class="nav-link active" href="/buku">Kelola Buku</a>
+                <a class="nav-link btn btn-light btn-sm text-dark ms-2" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Tambah Buku Baru</div>
+                    <div class="card-body">
+                        <form action="/buku" method="POST">
+                            <div class="mb-2">
+                                <label>Judul Buku</label>
+                                <input type="text" name="judul" class="form-control" required>
+                            </div>
+                            <div class="mb-2">
+                                <label>Pengarang</label>
+                                <input type="text" name="pengarang" class="form-control" required>
+                            </div>
+                            <div class="mb-2">
+                                <label>Penerbit</label>
+                                <input type="text" name="penerbit" class="form-control" required>
+                            </div>
+                            <div class="mb-2">
+                                <label>Tanggal Terbit</label>
+                                <input type="date" name="tgl_terbit" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mt-2">Simpan Buku</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Judul</th>
+                            <th>Pengarang</th>
+                            <th>Penerbit</th>
+                            <th style="width: 100px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if buku %}
+                            {% for b in buku %}
+                            <tr>
+                                <td>{{ b['judul_buku'] }}</td>
+                                <td>{{ b['nama_pengarang'] }}</td>
+                                <td>{{ b['nama_penerbit'] }}</td>
+                                <td>
+                                    <a href="{{ url_for('hapus_buku_master', id_buku=b['id_buku']) }}" 
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('Apakah Anda yakin ingin menghapus buku: {{ b.judul_buku }}? Data tidak bisa dikembalikan.');">
+                                        Hapus
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Belum ada data buku.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Script Bootstrap untuk fitur Dismiss Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
